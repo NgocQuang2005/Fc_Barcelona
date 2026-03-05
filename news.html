@@ -16,7 +16,7 @@
     <span class="nav-logo-icon">⚽</span>
     <span class="club-name">FC Barcelona</span>
   </div>
-  <ul class="nav-links">
+  <ul class="nav-links" id="nav-links">
     <li><a href="index.html" class="nav-link">Trang Chủ</a></li>
     <li><a href="matches.html" class="nav-link">Trận Đấu</a></li>
     <li><a href="squad.html" class="nav-link">Đội Hình</a></li>
@@ -27,6 +27,9 @@
   </ul>
   <div class="nav-actions">
     <button class="theme-toggle" id="theme-toggle" title="Đổi giao diện">🌙</button>
+    <button class="hamburger" id="hamburger" title="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
 
@@ -47,39 +50,11 @@
 <!-- Scripts -->
 <script src="js/storage.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/common.js"></script>
 <script src="js/pages/news.js"></script>
 <script>
-  // Initialize and render news page
-  applyTheme();
-  updateFooter();
+  initCommon();
   renderNews();
-  
-  // Theme toggle
-  document.getElementById('theme-toggle').addEventListener('click', () => {
-    const currentTheme = localStorage.getItem('theme') || 'dark';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('theme', newTheme);
-    applyTheme();
-    document.getElementById('theme-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-  });
-  
-  const theme = localStorage.getItem('theme') || 'dark';
-  document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
-  
-  function updateFooter() {
-    const club = getClub();
-    const footer = document.querySelector('.footer');
-    if (footer) {
-      footer.innerHTML = `
-        <div class="footer-content">
-          <p>&copy; 2025 ${club.clubName || 'FC Barcelona'}. Mes Que Un Club.</p>
-          <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
-            ${club.description || 'Trang quản lý câu lạc bộ bóng đá'}
-          </p>
-        </div>
-      `;
-    }
-  }
 </script>
 </body>
 </html>
