@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Huyền Thoại - FC Barcelona Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="nav-brand">
+    <span class="nav-logo-icon">⚽</span>
+    <span class="club-name">FC Barcelona</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="index.html" class="nav-link">Trang Chủ</a></li>
+    <li><a href="matches.html" class="nav-link">Trận Đấu</a></li>
+    <li><a href="squad.html" class="nav-link">Đội Hình</a></li>
+    <li><a href="stats.html" class="nav-link">Thống Kê</a></li>
+    <li><a href="legends.html" class="nav-link active">Huyền Thoại</a></li>
+    <li><a href="news.html" class="nav-link">Tin Tức</a></li>
+    <li><a href="admin.html" class="nav-link nav-admin">Admin</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="theme-toggle" id="theme-toggle" title="Đổi giao diện">🌙</button>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="app"></main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box" id="modal-box">
+    <button class="modal-close" id="modal-close">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer"></footer>
+
+<!-- Scripts -->
+<script src="js/storage.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/pages/legends.js"></script>
+<script>
+  // Initialize and render legends page
+  applyTheme();
+  updateFooter();
+  renderLegends();
+  
+  // Theme toggle
+  document.getElementById('theme-toggle').addEventListener('click', () => {
+    const currentTheme = localStorage.getItem('theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', newTheme);
+    applyTheme();
+    document.getElementById('theme-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+  });
+  
+  const theme = localStorage.getItem('theme') || 'dark';
+  document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+  
+  function updateFooter() {
+    const club = getClub();
+    const footer = document.querySelector('.footer');
+    if (footer) {
+      footer.innerHTML = `
+        <div class="footer-content">
+          <p>&copy; 2025 ${club.clubName || 'FC Barcelona'}. Mes Que Un Club.</p>
+          <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">
+            ${club.description || 'Trang quản lý câu lạc bộ bóng đá'}
+          </p>
+        </div>
+      `;
+    }
+  }
+</script>
+</body>
+</html>
