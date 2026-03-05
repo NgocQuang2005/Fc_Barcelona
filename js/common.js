@@ -5,10 +5,9 @@ function initTheme() {
   if (!themeToggle) return;
   
   themeToggle.addEventListener('click', () => {
-    const currentTheme = localStorage.getItem('theme') || 'dark';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('theme', newTheme);
-    applyTheme();
+    applyTheme(newTheme);
     themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
   });
   
@@ -62,10 +61,29 @@ function updateFooter() {
   }
 }
 
+// Modal initialization
+function initModal() {
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalClose = document.getElementById('modal-close');
+  
+  if (!modalOverlay || !modalClose) return;
+  
+  // Close modal when clicking the X button
+  modalClose.addEventListener('click', closeModal);
+  
+  // Close modal when clicking the overlay (outside the modal box)
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) {
+      closeModal();
+    }
+  });
+}
+
 // Initialize common features
 function initCommon() {
   applyTheme();
   initTheme();
   initMobileMenu();
+  initModal();
   updateFooter();
 }

@@ -74,13 +74,17 @@ function closeModal() {
 
 // Theme
 function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  saveToStorage('theme', t);
+  const theme = t || localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  if (t) {
+    localStorage.setItem('theme', t);
+  }
 }
 
 function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme');
-  applyTheme(cur === 'dark' ? 'light' : 'dark');
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  const newTheme = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(newTheme);
 }
 
 // Slider
