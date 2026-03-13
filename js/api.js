@@ -4,7 +4,7 @@
    Dữ liệu trả về được chuyển về đúng format cũ (camelCase)
    ============================================================ */
 
-const API_BASE = 'http://localhost:4000/api';
+const API_BASE = 'https://fc-barcelona.onrender.com/api';
 
 // ─── Core fetch helper ────────────────────────────────────────
 async function apiFetch(path, options = {}) {
