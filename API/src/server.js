@@ -31,7 +31,8 @@ app.register(swagger, {
       version:     '1.0.0',
     },
     servers: [
-      { url: `http://localhost:${process.env.PORT || 5000}`, description: 'Local' },
+      { url: 'https://fc-barcelona.onrender.com', description: 'Production (Render)' },
+      { url: `http://localhost:${process.env.PORT || 4000}`, description: 'Local' },
     ],
     tags: [
       { name: 'Club',      description: 'Thông tin câu lạc bộ' },
@@ -59,8 +60,10 @@ app.register(swaggerUi, {
 
 // ─── CORS ─────────────────────────────────────────────────────
 app.register(cors, {
-  origin:  process.env.CORS_ORIGIN || '*',
+  origin:  true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
 });
 
 // ─── Health ──────────────────────────────────────────────────
