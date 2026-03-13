@@ -46,8 +46,8 @@ function initMobileMenu() {
 }
 
 // Footer update
-function updateFooter() {
-  const club = getClub();
+async function updateFooter() {
+  const club = await getClub().catch(() => ({}));
   const footer = document.querySelector('.footer');
   if (footer) {
     footer.innerHTML = `
@@ -85,5 +85,5 @@ function initCommon() {
   initTheme();
   initMobileMenu();
   initModal();
-  updateFooter();
+  updateFooter(); // async, fire-and-forget
 }

@@ -48,13 +48,13 @@
 <footer class="footer"></footer>
 
 <!-- Scripts -->
-<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/common.js"></script>
 <script src="js/pages/legends.js"></script>
 <script>
   initCommon();
-  renderLegends();
+  renderLegends().catch(err => console.error('renderLegends:', err));
 </script>
 </body>
 </html>

@@ -2,14 +2,14 @@
    HOME PAGE
    ============================================================ */
 
-function renderHome() {
+async function renderHome() {
   const app = document.getElementById('app');
-  const club = getClub();
-  const upcoming = getUpcoming();
-  const players = getPlayers();
-  const recent = getRecent();
-  const legends = getLegends().slice(0, 4);
-  const news = getNews().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
+  await getTeams(); // populate cache for getTeamById()
+  const [club, upcoming, players, recent, legendsAll, newsAll] = await Promise.all([
+    getClub(), getUpcoming(), getPlayers(), getRecent(), getLegends(), getNews()
+  ]);
+  const legends = legendsAll.slice(0, 4);
+  const news = newsAll.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
 
   app.innerHTML = `
     <div class="page">
@@ -134,15 +134,15 @@ function renderHome() {
 
   setTimeout(() => initSlider(), 50);
   initFilter('home-filter', 'home-results', recent, renderResultCards);
-  bindPlayerCards();
-  bindResultCards();
+  bindPlayerCards(players);
+  bindResultCards(recent);
   bindHomeNewsCards();
   bindHomeLegendCards();
 }
 
 function renderUpcomingCard(m) {
-  const home = getTeamById(m.homeTeamId);
-  const away = getTeamById(m.awayTeamId);
+  const home = getTeamById(m.homeTeamId) || { name: m.homeTeamName, logo: m.homeTeamLogo };
+  const away = getTeamById(m.awayTeamId) || { name: m.awayTeamName, logo: m.awayTeamLogo };
   return `
     <div class="match-slide">
       <div class="match-tournament">${m.tournament || 'Giao hữu'}</div>
@@ -184,8 +184,8 @@ function renderPlayerCard(p) {
 function renderResultCards(items) {
   if (!items || !items.length) return '<div class="empty-state"><div class="empty-state-icon">⚽</div><div class="empty-state-text">Chưa có kết quả</div></div>';
   return items.map(m => {
-    const home = getTeamById(m.homeTeamId);
-    const away = getTeamById(m.awayTeamId);
+    const home = getTeamById(m.homeTeamId) || { name: m.homeTeamName, logo: m.homeTeamLogo };
+    const away = getTeamById(m.awayTeamId) || { name: m.awayTeamName, logo: m.awayTeamLogo };
     return `
       <div class="result-card" data-match-id="${m.id}">
         ${m.image
@@ -212,21 +212,21 @@ function renderResultCards(items) {
   }).join('');
 }
 
-function bindPlayerCards() {
+function bindPlayerCards(players) {
   document.querySelectorAll('.player-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = card.dataset.playerId;
-      const p = getPlayers().find(x => x.id === id);
+      const p = players.find(x => x.id === id);
       if (p) openPlayerModal(p);
     });
   });
 }
 
-function bindResultCards() {
+function bindResultCards(recent) {
   document.querySelectorAll('.result-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = card.dataset.matchId;
-      const m = getRecent().find(x => x.id === id);
+      const m = recent ? recent.find(x => x.id === id) : null;
       if (m) openMatchModal(m);
     });
   });
@@ -234,9 +234,9 @@ function bindResultCards() {
 
 function bindHomeNewsCards() {
   document.querySelectorAll('.news-card-home').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', async () => {
       const id = card.dataset.newsId;
-      const newsItem = getNewsById(id);
+      const newsItem = await getNewsById(id);
       if (newsItem) openNewsModal(newsItem);
     });
   });
@@ -244,16 +244,16 @@ function bindHomeNewsCards() {
 
 function bindHomeLegendCards() {
   document.querySelectorAll('.legend-card-home').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', async () => {
       const id = card.dataset.legendId;
-      const legend = getLegendById(id);
+      const legend = await getLegendById(id);
       if (legend) openLegendModal(legend);
     });
   });
 }
 
 function openPlayerModal(p) {
-  const team = getTeamById(p.teamId);
+  const team = getTeamById(p.teamId) || { name: p.team_name || '—' };
   openModal(`
     ${p.image
       ? `<img src="${p.image}" class="modal-player-img" alt="${p.name}" onerror="this.src=''">`
@@ -270,8 +270,8 @@ function openPlayerModal(p) {
 }
 
 function openMatchModal(m) {
-  const home = getTeamById(m.homeTeamId);
-  const away = getTeamById(m.awayTeamId);
+  const home = getTeamById(m.homeTeamId) || { name: m.homeTeamName, logo: m.homeTeamLogo };
+  const away = getTeamById(m.awayTeamId) || { name: m.awayTeamName, logo: m.awayTeamLogo };
   openModal(`
     <div style="text-align:center;margin-bottom:1.5rem">
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.75rem;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:0.5rem">${m.tournament}</div>

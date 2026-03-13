@@ -48,13 +48,13 @@
 <footer class="footer"></footer>
 
 <!-- Scripts - Load in correct order -->
-<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/common.js"></script>
 <script src="js/pages/home.js"></script>
 <script>
   initCommon();
-  renderHome();
+  renderHome().catch(err => console.error('renderHome:', err));
 </script>
 </body>
 </html>

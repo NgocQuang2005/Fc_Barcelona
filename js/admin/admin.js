@@ -3,8 +3,17 @@
    Includes: Overview, Club, Teams, Players, Coaches, Upcoming, Recent, Standings, Legends, News
    ============================================================ */
 
-function renderAdmin() {
+let _adminData = {};
+let _adminDocClickHandler;
+
+async function renderAdmin() {
   const app = document.getElementById('app');
+
+  const [teams, players, coaches, upcoming, recent, standings, legends, news] =
+    await Promise.all([getTeams(), getPlayers(), getCoaches(), getUpcoming(),
+      getRecent(), getStandings(), getLegends(), getNews()]);
+  const club = await getClub();
+  _adminData = { club, teams, players, coaches, upcoming, recent, standings, legends, news };
 
   const navItems = [
     { key:'overview', icon:'📊', label:'Tổng Quan' },
@@ -59,8 +68,9 @@ function renderAdmin() {
 }
 
 function renderAdminOverview() {
-  const p = getPlayers().length, r = getRecent().length, u = getUpcoming().length, 
-        t = getTeams().length, c = getCoaches().length, l = getLegends().length, n = getNews().length;
+  const { players, recent, upcoming, teams, coaches, legends, news } = _adminData;
+  const p = players.length, r = recent.length, u = upcoming.length,
+        t = teams.length, c = coaches.length, l = legends.length, n = news.length;
   return `
     <div class="admin-section active" id="admin-overview">
       <div class="admin-section-title">Tổng Quan</div>
@@ -79,7 +89,7 @@ function renderAdminOverview() {
 }
 
 function renderAdminClub() {
-  const club = getClub();
+  const club = _adminData.club || {};
   return `
     <div class="admin-section" id="admin-club">
       <div class="admin-section-title">Thông Tin CLB</div>
@@ -102,7 +112,7 @@ function renderAdminClub() {
 }
 
 function renderAdminTeams() {
-  const teams = getTeams();
+  const teams = _adminData.teams || [];
   return `
     <div class="admin-section" id="admin-teams">
       <div class="admin-section-title">Đội Bóng</div>
@@ -135,8 +145,8 @@ function renderAdminTeams() {
 }
 
 function renderAdminPlayers() {
-  const players = getPlayers();
-  const teams = getTeams();
+  const players = _adminData.players || [];
+  const teams = _adminData.teams || [];
   const positions = ['GK','CB','LB','RB','CM','DM','AM','LW','RW','ST','SS'];
   return `
     <div class="admin-section" id="admin-players">
@@ -185,7 +195,7 @@ function renderAdminPlayers() {
 }
 
 function renderAdminCoaches() {
-  const coaches = getCoaches();
+  const coaches = _adminData.coaches || [];
   return `
     <div class="admin-section" id="admin-coaches">
       <div class="admin-section-title">Ban Huấn Luyện</div>
@@ -219,7 +229,7 @@ function renderAdminCoaches() {
 }
 
 function renderAdminLegends() {
-  const legends = getLegends();
+  const legends = _adminData.legends || [];
   return `
     <div class="admin-section" id="admin-legends">
       <div class="admin-section-title">Huyền Thoại CLB</div>
@@ -253,7 +263,7 @@ function renderAdminLegends() {
 }
 
 function renderAdminNews() {
-  const news = getNews().sort((a,b) => new Date(b.date) - new Date(a.date));
+  const news = (_adminData.news || []).sort((a,b) => new Date(b.date) - new Date(a.date));
   return `
     <div class="admin-section" id="admin-news">
       <div class="admin-section-title">Tin Tức CLB</div>
@@ -288,8 +298,8 @@ function renderAdminNews() {
 }
 
 function renderAdminUpcoming() {
-  const upcoming = getUpcoming();
-  const teams = getTeams();
+  const upcoming = _adminData.upcoming || [];
+  const teams = _adminData.teams || [];
   const teamOpts = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
   return `
     <div class="admin-section" id="admin-upcoming">
@@ -334,8 +344,8 @@ function renderAdminUpcoming() {
 }
 
 function renderAdminRecent() {
-  const recent = getRecent();
-  const teams = getTeams();
+  const recent = _adminData.recent || [];
+  const teams = _adminData.teams || [];
   const teamOpts = teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
   return `
     <div class="admin-section" id="admin-recent">
@@ -382,7 +392,7 @@ function renderAdminRecent() {
 }
 
 function renderAdminStandings() {
-  const standings = getStandings();
+  const standings = _adminData.standings || [];
   return `
     <div class="admin-section" id="admin-standings">
       <div class="admin-section-title">Bảng Xếp Hạng</div>
@@ -429,177 +439,177 @@ function bindAdminForms() {
 
   // Save club
   const saveClubBtn = $('btn-save-club');
-  if (saveClubBtn) saveClubBtn.addEventListener('click', () => {
-    saveClubInfo({ clubName: val('club-name'), description: val('club-desc') });
-    updateNav(currentPage);
+  if (saveClubBtn) saveClubBtn.addEventListener('click', async () => {
+    await saveClubInfo({ clubName: val('club-name'), description: val('club-desc') });
     updateFooter();
     showToast('Đã lưu thông tin CLB!');
   });
 
   // Team handlers
   const addTeamBtn = $('btn-add-team');
-  if (addTeamBtn) addTeamBtn.addEventListener('click', () => {
+  if (addTeamBtn) addTeamBtn.addEventListener('click', async () => {
     const name = val('team-name');
     if (!name) { showToast('Vui lòng nhập tên đội', 'error'); return; }
     const data = { name, logo: val('team-logo'), country: val('team-country') };
     if (editMode.team) {
-      updateTeam(editMode.team, data);
+      await updateTeam(editMode.team, data);
       showToast('Đã cập nhật đội bóng');
       editMode.team = null;
       $('btn-add-team').innerHTML = '➕ Thêm Đội';
       $('btn-add-team').classList.remove('editing');
     } else {
-      addTeam(data);
+      await addTeam(data);
       showToast('Đã thêm đội bóng');
     }
-    renderAdmin();
+    await renderAdmin();
     document.querySelector('[data-section="teams"]').click();
   });
 
   // Player handlers
   const addPlayerBtn = $('btn-add-player');
-  if (addPlayerBtn) addPlayerBtn.addEventListener('click', () => {
+  if (addPlayerBtn) addPlayerBtn.addEventListener('click', async () => {
     const name = val('pl-name');
     if (!name) { showToast('Vui lòng nhập tên cầu thủ', 'error'); return; }
     const data = { name, number: val('pl-number'), birthday: val('pl-birthday'), nationality: val('pl-nat'), position: val('pl-pos'), teamId: val('pl-team'), image: val('pl-img') };
     if (editMode.player) {
-      updatePlayer(editMode.player, data);
+      await updatePlayer(editMode.player, data);
       showToast('Đã cập nhật cầu thủ');
       editMode.player = null;
       $('btn-add-player').innerHTML = '➕ Thêm Cầu Thủ';
       $('btn-add-player').classList.remove('editing');
     } else {
-      addPlayer(data);
+      await addPlayer(data);
       showToast('Đã thêm cầu thủ');
     }
-    renderAdmin();
+    await renderAdmin();
     document.querySelector('[data-section="players"]').click();
   });
 
-  // Coach handlers  
+  // Coach handlers
   const addCoachBtn = $('btn-add-coach');
-  if (addCoachBtn) addCoachBtn.addEventListener('click', () => {
-    const name= val('co-name');
+  if (addCoachBtn) addCoachBtn.addEventListener('click', async () => {
+    const name = val('co-name');
     if (!name) { showToast('Vui lòng nhập tên HLV', 'error'); return; }
     const data = { name, birthday: val('co-birthday'), nationality: val('co-nat'), image: val('co-img') };
     if (editMode.coach) {
-      updateCoach(editMode.coach, data);
+      await updateCoach(editMode.coach, data);
       showToast('Đã cập nhật HLV');
       editMode.coach = null;
       $('btn-add-coach').innerHTML = '➕ Thêm HLV';
       $('btn-add-coach').classList.remove('editing');
     } else {
-      addCoach(data);
+      await addCoach(data);
       showToast('Đã thêm HLV');
     }
-    renderAdmin();
+    await renderAdmin();
     document.querySelector('[data-section="coaches"]').click();
   });
 
   // Legend handlers
   const addLegendBtn = $('btn-add-legend');
-  if (addLegendBtn) addLegendBtn.addEventListener('click', () => {
+  if (addLegendBtn) addLegendBtn.addEventListener('click', async () => {
     const name = val('legend-name');
     if (!name) { showToast('Vui lòng nhập tên huyền thoại', 'error'); return; }
     const data = { name, period: val('legend-period'), achievements: val('legend-achievements'), image: val('legend-img') };
     if (editMode.legend) {
-      updateLegend(editMode.legend, data);
+      await updateLegend(editMode.legend, data);
       showToast('Đã cập nhật huyền thoại');
       editMode.legend = null;
       $('btn-add-legend').innerHTML = '➕ Thêm Huyền Thoại';
       $('btn-add-legend').classList.remove('editing');
     } else {
-      addLegend(data);
+      await addLegend(data);
       showToast('Đã thêm huyền thoại');
     }
-    renderAdmin();
+    await renderAdmin();
     document.querySelector('[data-section="legends"]').click();
   });
 
   // News handlers
   const addNewsBtn = $('btn-add-news');
-  if (addNewsBtn) addNewsBtn.addEventListener('click', () => {
+  if (addNewsBtn) addNewsBtn.addEventListener('click', async () => {
     const title = val('news-title');
     if (!title) { showToast('Vui lòng nhập tiêu đề', 'error'); return; }
     const data = { title, date: val('news-date'), author: val('news-author'), content: val('news-content'), image: val('news-img') };
     if (editMode.news) {
-      updateNews(editMode.news, data);
+      await updateNews(editMode.news, data);
       showToast('Đã cập nhật tin tức');
       editMode.news = null;
       $('btn-add-news').innerHTML = '➕ Thêm Tin Tức';
       $('btn-add-news').classList.remove('editing');
     } else {
-      addNews(data);
+      await addNews(data);
       showToast('Đã thêm tin tức');
     }
-    renderAdmin();
+    await renderAdmin();
     document.querySelector('[data-section="news"]').click();
   });
 
   // Upcoming handlers
   const addUpBtn = $('btn-add-upcoming');
-  if (addUpBtn) addUpBtn.addEventListener('click', () => {
+  if (addUpBtn) addUpBtn.addEventListener('click', async () => {
     const time = val('up-time'), home = val('up-home'), away = val('up-away');
     if (!time || !home || !away) { showToast('Vui lòng điền đầy đủ thông tin', 'error'); return; }
     const data = { time, stadium: val('up-stadium'), homeTeamId: home, awayTeamId: away, tournament: val('up-tour') };
     if (editMode.upcoming) {
-      updateUpcoming(editMode.upcoming, data);
+      await updateUpcoming(editMode.upcoming, data);
       showToast('Đã cập nhật lịch');
       editMode.upcoming = null;
       $('btn-add-upcoming').innerHTML = '➕ Thêm Lịch';
       $('btn-add-upcoming').classList.remove('editing');
     } else {
-      addUpcomingMatch(data);
+      await addUpcomingMatch(data);
       showToast('Đã thêm lịch');
     }
-    renderAdmin();
+    await renderAdmin();
     document.querySelector('[data-section="upcoming"]').click();
   });
 
   // Recent handlers
   const addReBtn = $('btn-add-recent');
-  if (addReBtn) addReBtn.addEventListener('click', () => {
+  if (addReBtn) addReBtn.addEventListener('click', async () => {
     const time = val('re-time'), home = val('re-home'), away = val('re-away'), score = val('re-score');
     if (!time || !home || !away || !score) { showToast('Vui lòng điền đầy đủ thông tin', 'error'); return; }
     const data = { time, stadium: val('re-stadium'), homeTeamId: home, awayTeamId: away, score, tournament: val('re-tour'), image: val('re-img') };
     if (editMode.recent) {
-      updateRecent(editMode.recent, data);
+      await updateRecent(editMode.recent, data);
       showToast('Đã cập nhật kết quả');
       editMode.recent = null;
       $('btn-add-recent').innerHTML = '➕ Thêm Kết Quả';
       $('btn-add-recent').classList.remove('editing');
     } else {
-      addRecentMatch(data);
+      await addRecentMatch(data);
       showToast('Đã thêm kết quả');
     }
-    renderAdmin();
+    await renderAdmin();
     document.querySelector('[data-section="recent"]').click();
   });
 
   // Standing handlers
   const addStBtn = $('btn-add-standing');
-  if (addStBtn) addStBtn.addEventListener('click', () => {
+  if (addStBtn) addStBtn.addEventListener('click', async () => {
     const team = val('st-team');
     if (!team) { showToast('Vui lòng nhập tên đội', 'error'); return; }
     const data = { team, played: +val('st-played')||0, won: +val('st-won')||0, drawn: +val('st-drawn')||0, lost: +val('st-lost')||0, gf: +val('st-gf')||0, ga: +val('st-ga')||0, pts: +val('st-pts')||0 };
     if (editMode.standing) {
-      updateStanding(editMode.standing, data);
+      await updateStanding(editMode.standing, data);
       showToast('Đã cập nhật BXH');
       editMode.standing = null;
       $('btn-add-standing').innerHTML = '➕ Thêm Vào BXH';
       $('btn-add-standing').classList.remove('editing');
     } else {
-      addStanding(data);
+      await addStanding(data);
       showToast('Đã thêm BXH');
     }
-    renderAdmin();
+    await renderAdmin();
     document.querySelector('[data-section="standings"]').click();
   });
 
-  // Edit handlers
-  document.addEventListener('click', function(e) {
+  // Edit & Delete handlers — remove old listener first to prevent duplicates
+  if (_adminDocClickHandler) document.removeEventListener('click', _adminDocClickHandler);
+  _adminDocClickHandler = async function(e) {
     if (e.target.dataset.editTeam) {
-      const item = getTeamById(e.target.dataset.editTeam);
+      const item = (_adminData.teams || []).find(t => t.id === e.target.dataset.editTeam);
       if (item) {
         editMode.team = item.id;
         $('team-name').value = item.name || '';
@@ -611,12 +621,12 @@ function bindAdminForms() {
       }
     }
     if (e.target.dataset.editPlayer) {
-      const item = getPlayerById(e.target.dataset.editPlayer);
+      const item = (_adminData.players || []).find(p => p.id === e.target.dataset.editPlayer);
       if (item) {
         editMode.player = item.id;
         $('pl-name').value = item.name || '';
         $('pl-number').value = item.number || '';
-        $('pl-birthday').value = item.birthday || '';
+        $('pl-birthday').value = item.birthday ? item.birthday.split('T')[0] : '';
         $('pl-nat').value = item.nationality || '';
         $('pl-pos').value = item.position || 'ST';
         $('pl-team').value = item.teamId || '';
@@ -627,11 +637,11 @@ function bindAdminForms() {
       }
     }
     if (e.target.dataset.editCoach) {
-      const item = getCoachById(e.target.dataset.editCoach);
+      const item = (_adminData.coaches || []).find(c => c.id === e.target.dataset.editCoach);
       if (item) {
         editMode.coach = item.id;
         $('co-name').value = item.name || '';
-        $('co-birthday').value = item.birthday || '';
+        $('co-birthday').value = item.birthday ? item.birthday.split('T')[0] : '';
         $('co-nat').value = item.nationality || '';
         $('co-img').value = item.image || '';
         $('btn-add-coach').innerHTML = '💾 Cập Nhật';
@@ -640,7 +650,7 @@ function bindAdminForms() {
       }
     }
     if (e.target.dataset.editLegend) {
-      const item = getLegendById(e.target.dataset.editLegend);
+      const item = (_adminData.legends || []).find(l => l.id === e.target.dataset.editLegend);
       if (item) {
         editMode.legend = item.id;
         $('legend-name').value = item.name || '';
@@ -653,11 +663,11 @@ function bindAdminForms() {
       }
     }
     if (e.target.dataset.editNews) {
-      const item = getNewsById(e.target.dataset.editNews);
+      const item = (_adminData.news || []).find(n => n.id === e.target.dataset.editNews);
       if (item) {
         editMode.news = item.id;
         $('news-title').value = item.title || '';
-        $('news-date').value = item.date || '';
+        $('news-date').value = item.date ? item.date.split('T')[0] : '';
         $('news-author').value = item.author || '';
         $('news-content').value = item.content || '';
         $('news-img').value = item.image || '';
@@ -667,10 +677,10 @@ function bindAdminForms() {
       }
     }
     if (e.target.dataset.editUpcoming) {
-      const item = getUpcomingById(e.target.dataset.editUpcoming);
+      const item = (_adminData.upcoming || []).find(m => m.id === e.target.dataset.editUpcoming);
       if (item) {
         editMode.upcoming = item.id;
-        $('up-time').value = item.time ? item.time.slice(0,16) : '';
+        $('up-time').value = item.time ? item.time.slice(0, 16) : '';
         $('up-stadium').value = item.stadium || '';
         $('up-home').value = item.homeTeamId || '';
         $('up-away').value = item.awayTeamId || '';
@@ -681,10 +691,10 @@ function bindAdminForms() {
       }
     }
     if (e.target.dataset.editRecent) {
-      const item = getRecentById(e.target.dataset.editRecent);
+      const item = (_adminData.recent || []).find(m => m.id === e.target.dataset.editRecent);
       if (item) {
         editMode.recent = item.id;
-        $('re-time').value = item.time ? item.time.slice(0,16) : '';
+        $('re-time').value = item.time ? item.time.slice(0, 16) : '';
         $('re-stadium').value = item.stadium || '';
         $('re-home').value = item.homeTeamId || '';
         $('re-away').value = item.awayTeamId || '';
@@ -697,7 +707,7 @@ function bindAdminForms() {
       }
     }
     if (e.target.dataset.editStanding) {
-      const item = getStandingById(e.target.dataset.editStanding);
+      const item = (_adminData.standings || []).find(s => s.id === e.target.dataset.editStanding);
       if (item) {
         editMode.standing = item.id;
         $('st-team').value = item.team || '';
@@ -715,13 +725,14 @@ function bindAdminForms() {
     }
 
     // Delete handlers
-    if (e.target.dataset.delTeam)     { if(confirm('Xóa đội này?')) { deleteTeam(e.target.dataset.delTeam); showToast('Đã xóa'); renderAdmin(); document.querySelector('[data-section="teams"]').click(); } }
-    if (e.target.dataset.delPlayer)   { if(confirm('Xóa cầu thủ này?')) { deletePlayer(e.target.dataset.delPlayer); showToast('Đã xóa'); renderAdmin(); document.querySelector('[data-section="players"]').click(); } }
-    if (e.target.dataset.delCoach)    { if(confirm('Xóa HLV này?')) { deleteCoach(e.target.dataset.delCoach); showToast('Đã xóa'); renderAdmin(); document.querySelector('[data-section="coaches"]').click(); } }
-    if (e.target.dataset.delLegend)   { if(confirm('Xóa huyền thoại này?')) { deleteLegend(e.target.dataset.delLegend); showToast('Đã xóa'); renderAdmin(); document.querySelector('[data-section="legends"]').click(); } }
-    if (e.target.dataset.delNews)     { if(confirm('Xóa tin tức này?')) { deleteNews(e.target.dataset.delNews); showToast('Đã xóa'); renderAdmin(); document.querySelector('[data-section="news"]').click(); } }
-    if (e.target.dataset.delUpcoming) { if(confirm('Xóa lịch thi đấu này?')) { deleteUpcoming(e.target.dataset.delUpcoming); showToast('Đã xóa'); renderAdmin(); document.querySelector('[data-section="upcoming"]').click(); } }
-    if (e.target.dataset.delRecent)   { if(confirm('Xóa kết quả này?')) { deleteRecent(e.target.dataset.delRecent); showToast('Đã xóa'); renderAdmin(); document.querySelector('[data-section="recent"]').click(); } }
-    if (e.target.dataset.delStanding) { if(confirm('Xóa khỏi BXH?')) { deleteStanding(e.target.dataset.delStanding); showToast('Đã xóa'); renderAdmin(); document.querySelector('[data-section="standings"]').click(); } }
-  });
+    if (e.target.dataset.delTeam)     { if (confirm('Xóa đội này?'))           { await deleteTeam(e.target.dataset.delTeam);     showToast('Đã xóa'); await renderAdmin(); document.querySelector('[data-section="teams"]').click(); } }
+    if (e.target.dataset.delPlayer)   { if (confirm('Xóa cầu thủ này?'))       { await deletePlayer(e.target.dataset.delPlayer);   showToast('Đã xóa'); await renderAdmin(); document.querySelector('[data-section="players"]').click(); } }
+    if (e.target.dataset.delCoach)    { if (confirm('Xóa HLV này?'))            { await deleteCoach(e.target.dataset.delCoach);    showToast('Đã xóa'); await renderAdmin(); document.querySelector('[data-section="coaches"]').click(); } }
+    if (e.target.dataset.delLegend)   { if (confirm('Xóa huyền thoại này?'))   { await deleteLegend(e.target.dataset.delLegend);   showToast('Đã xóa'); await renderAdmin(); document.querySelector('[data-section="legends"]').click(); } }
+    if (e.target.dataset.delNews)     { if (confirm('Xóa tin tức này?'))        { await deleteNews(e.target.dataset.delNews);     showToast('Đã xóa'); await renderAdmin(); document.querySelector('[data-section="news"]').click(); } }
+    if (e.target.dataset.delUpcoming) { if (confirm('Xóa lịch thi đấu này?'))  { await deleteUpcoming(e.target.dataset.delUpcoming); showToast('Đã xóa'); await renderAdmin(); document.querySelector('[data-section="upcoming"]').click(); } }
+    if (e.target.dataset.delRecent)   { if (confirm('Xóa kết quả này?'))        { await deleteRecent(e.target.dataset.delRecent);   showToast('Đã xóa'); await renderAdmin(); document.querySelector('[data-section="recent"]').click(); } }
+    if (e.target.dataset.delStanding) { if (confirm('Xóa khỏi BXH?'))           { await deleteStanding(e.target.dataset.delStanding); showToast('Đã xóa'); await renderAdmin(); document.querySelector('[data-section="standings"]').click(); } }
+  };
+  document.addEventListener('click', _adminDocClickHandler);
 }

@@ -11,6 +11,9 @@ const db = knex({
     database: process.env.DB_NAME     || 'barcelona_db',
     user:     process.env.DB_USER     || 'postgres',
     password: process.env.DB_PASSWORD || '',
+    ssl: process.env.DB_HOST && process.env.DB_HOST !== 'localhost'
+      ? { rejectUnauthorized: false }
+      : false,
   },
   pool: {
     min: 2,

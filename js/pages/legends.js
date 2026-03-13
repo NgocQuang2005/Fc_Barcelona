@@ -2,10 +2,9 @@
    LEGENDS PAGE
    ============================================================ */
 
-function renderLegends() {
+async function renderLegends() {
   const app = document.getElementById('app');
-  const legends = getLegends();
-  const club = getClub();
+  const [legends, club] = await Promise.all([getLegends(), getClub()]);
 
   app.innerHTML = `
     <div class="page">
@@ -53,9 +52,9 @@ function renderLegendCard(legend) {
 
 function bindLegendCards() {
   document.querySelectorAll('.legend-card').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', async () => {
       const id = card.dataset.legendId;
-      const legend = getLegendById(id);
+      const legend = await getLegendById(id);
       if (legend) openLegendModal(legend);
     });
   });

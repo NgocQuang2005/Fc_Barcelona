@@ -48,13 +48,13 @@
 <footer class="footer"></footer>
 
 <!-- Scripts -->
-<script src="js/storage.js"></script>
+<script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/common.js"></script>
 <script src="js/pages/stats.js"></script>
 <script>
   initCommon();
-  renderStats();
+  renderStats().catch(err => console.error('renderStats:', err));
 </script>
 </body>
 </html>

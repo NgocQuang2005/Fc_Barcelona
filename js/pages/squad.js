@@ -2,10 +2,10 @@
    SQUAD PAGE
    ============================================================ */
 
-function renderSquad() {
+async function renderSquad() {
   const app = document.getElementById('app');
-  const players = getPlayers();
-  const coaches = getCoaches();
+  await getTeams(); // populate cache
+  const [players, coaches] = await Promise.all([getPlayers(), getCoaches()]);
 
   const groups = {
     gk:  { label: 'Thủ Môn',  emoji: '🥅', players: players.filter(p => posGroup(p.position) === 'gk') },
@@ -81,4 +81,21 @@ function renderSquadCard(p) {
       </div>
     </div>
   `;
+}
+
+function openPlayerModal(p) {
+  const team = getTeamById(p.teamId) || { name: p.team_name || '—' };
+  openModal(`
+    ${p.image
+      ? `<img src="${p.image}" class="modal-player-img" alt="${p.name}" onerror="this.src=''">`
+      : `<div class="modal-player-img-ph">🧑</div>`}
+    <div class="modal-player-number">${p.number || '—'}</div>
+    <div class="modal-player-name">${p.name}</div>
+    <div class="modal-details">
+      <div class="modal-detail-item"><div class="modal-detail-label">Vị Trí</div><div class="modal-detail-value">${positionLabel(p.position)}</div></div>
+      <div class="modal-detail-item"><div class="modal-detail-label">Quốc Tịch</div><div class="modal-detail-value">${p.nationality || '—'}</div></div>
+      <div class="modal-detail-item"><div class="modal-detail-label">Ngày Sinh</div><div class="modal-detail-value">${formatDate(p.birthday)}</div></div>
+      <div class="modal-detail-item"><div class="modal-detail-label">Đội</div><div class="modal-detail-value">${team ? team.name : '—'}</div></div>
+    </div>
+  `);
 }

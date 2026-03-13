@@ -2,10 +2,10 @@
    NEWS PAGE
    ============================================================ */
 
-function renderNews() {
+async function renderNews() {
   const app = document.getElementById('app');
-  const news = getNews().sort((a, b) => new Date(b.date) - new Date(a.date));
-  const club = getClub();
+  const [newsAll, club] = await Promise.all([getNews(), getClub()]);
+  const news = newsAll.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   app.innerHTML = `
     <div class="page">
@@ -54,9 +54,9 @@ function renderNewsCard(newsItem) {
 
 function bindNewsCards() {
   document.querySelectorAll('.news-card').forEach(card => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', async () => {
       const id = card.dataset.newsId;
-      const newsItem = getNewsById(id);
+      const newsItem = await getNewsById(id);
       if (newsItem) openNewsModal(newsItem);
     });
   });

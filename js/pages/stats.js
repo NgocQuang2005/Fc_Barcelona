@@ -2,13 +2,11 @@
    STATS PAGE
    ============================================================ */
 
-function renderStats() {
+async function renderStats() {
   const app = document.getElementById('app');
-  const players = getPlayers();
-  const recent = getRecent();
-  const coaches = getCoaches();
-  const teams = getTeams();
-  const standings = getStandings();
+  const [players, recent, coaches, teams, standings] = await Promise.all([
+    getPlayers(), getRecent(), getCoaches(), getTeams(), getStandings()
+  ]);
 
   const posCount = {};
   players.forEach(p => { const g = posGroup(p.position); posCount[g] = (posCount[g]||0)+1; });
